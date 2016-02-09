@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
-  "fmt"
   "log"
 	"encoding/json"
 	"os"
@@ -11,20 +10,22 @@ import (
 )
 
 type conditions struct {
-  id int "json:id"
-	cityname string "json:cityname"
-	zipcode string "json:zipcode"
+  id int
+	cityname string
+	zipcode string
 	tempk sql.NullFloat64
 	descript string
 	humidity sql.NullFloat64
 	windspd sql.NullFloat64
-	sunrise sql.NullFloat64
-	sunset sql.NullFloat64
-	ptime sql.NullFloat64
+	sunrise string
+	sunset string
+	ptime string
 }
 
 func main() {
-  db, err := sql.Open("mysql", "root:byteme@tcp(127.0.0.1:3306)/weather")
+	var zip string = os.Getenv("ZIP")
+	var usrpwd string = os.Getenv("DB_USER_PWD")
+  db, err := sql.Open("mysql", usrpwd + "@tcp(127.0.0.1:3306)/weather")
   if err != nil {
     log.Fatal(err)
   }
@@ -49,20 +50,23 @@ func main() {
   }
 
   for _, bk := range bks {
-		var city string = bk.cityname
-		var zip string = bk.zipcode
-		var temp float64
-		// temp = fmt.Sprintf("%.2f", bk.tempk.Float64)
-		temp = bk.tempk.Float64
-		temp = temp - 273.15
-		temp = temp * 1.8
-		temp = temp + 32
-		// fmt.Printf("%s, %s, %0.2f\n", city, zip, temp)4
-		fmt.Printf("%s, %s, %0.1f \n", city, zip, temp)
-		var stemp string = strconv.FormatFloat(float64(temp), 'f', 2, 32)
-		enc := json.NewEncoder(os.Stdout)
-    d := map[string]string{"cityname": city, "zipcode": zip, "tempature": stemp}
-		// c := map[string]float64{"tempature": temp}
-    enc.Encode(d)
+	  if zip == bk.zipcode {
+		  var temp float64 = bk.tempk.Float64
+      //convert temp from Kelvin to Fahrenheit
+			// temp = ((temp - 273.15) * 1.8) + 32
+	    // fmt.Printf("%s, %s, %0.1f \n", city, zip, temp)
+		  var stemp string = strconv.FormatFloat(float64(temp), 'f', 2, 32)
+      var hum float64 = bk.humidity.Float64
+		  var shumidity string = strconv.FormatFloat(float64(hum), 'f', 1, 32)
+      var ws float64 = bk.windspd.Float64
+		  var swindspd string = strconv.FormatFloat(float64(ws), 'f', 1, 32)
+		  enc := json.NewEncoder(os.Stdout)
+      d := map[string]string{"data": "weather", "city": bk.cityname,
+			                       "zipcode": bk.zipcode, "tempature": stemp,
+			  										 "condition": bk.descript, "updated": bk.ptime,
+			  									   "humidity": shumidity, "windspeed": swindspd,
+			  									   "sunrise": bk.sunrise, "sunset": bk.sunset}
+      enc.Encode(d)
+		}
 	}
 }
