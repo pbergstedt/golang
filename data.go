@@ -59,9 +59,9 @@ func main() {
 		temp = temp + 32
 		// fmt.Printf("%s, %s, %0.2f\n", city, zip, temp)4
 		fmt.Printf("%s, %s, %0.1f \n", city, zip, temp)
-		temps := strconv.Itoa(temp)
+		var stemp string = strconv.FormatFloat(float64(temp), 'f', 2, 32)
 		enc := json.NewEncoder(os.Stdout)
-    d := map[string]string{"cityname": city, "zipcode": zip, "tempature": temps}
+    d := map[string]string{"cityname": city, "zipcode": zip, "tempature": stemp}
 		// c := map[string]float64{"tempature": temp}
     enc.Encode(d)
 	}
